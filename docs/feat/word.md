@@ -5,7 +5,14 @@ Route: `/words`
 ## Files
 
 - `src/data/words.ts` — mock word data (10 entries)
-- `src/routes/words.tsx` — flashcard page
+- `src/routes/words.tsx` — layout route, provides `WordsContext`
+- `src/routes/words/index.tsx` — word card page
+- `src/routes/words/summary.tsx` — completion summary page
+- `src/routes/words/hooks/-useWordsState.ts` — state management hook
+- `src/routes/words/hooks/-context.ts` — React Context + `useWordsContext`
+- `src/routes/words/components/-WordCard.tsx` — word card component
+- `src/routes/words/components/-ProgressBar.tsx` — draggable progress bar
+- `src/routes/words/components/-Summary.tsx` — summary component
 
 ## Interaction
 
@@ -35,15 +42,24 @@ Route: `/words`
 - Auto-plays when a word appears
 - Replays on tap on the word or space key
 
-## Card Status Colors
+## Word Status Colors
 
-| Status  | Background      |
-| ------- | --------------- |
-| Default | White `#fff`    |
-| Known   | Green `#e6f9e6` |
-| Unknown | Red `#fde8e8`   |
+| Status  | Word Color        |
+| ------- | ----------------- |
+| Default | Black `#1a1a1a`   |
+| Known   | Green `#34a853`   |
+| Unknown | Red `#ea4335`     |
+
+## Progress Bar
+
+- Displayed above the word card
+- Shows current position / total (e.g. `3 / 10`)
+- Click anywhere on the bar to jump to that word
+- Drag the thumb to scrub through words
 
 ## Completion Screen
+
+Route: `/words/summary`
 
 Shown after all words are marked:
 

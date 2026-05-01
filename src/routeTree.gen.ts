@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WordsRouteImport } from './routes/words'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WordsIndexRouteImport } from './routes/words/index'
+import { Route as WordsSummaryRouteImport } from './routes/words/summary'
 
 const WordsRoute = WordsRouteImport.update({
   id: '/words',
@@ -28,35 +30,50 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WordsIndexRoute = WordsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WordsRoute,
+} as any)
+const WordsSummaryRoute = WordsSummaryRouteImport.update({
+  id: '/summary',
+  path: '/summary',
+  getParentRoute: () => WordsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/words': typeof WordsRoute
+  '/words': typeof WordsRouteWithChildren
+  '/words/summary': typeof WordsSummaryRoute
+  '/words/': typeof WordsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/words': typeof WordsRoute
+  '/words/summary': typeof WordsSummaryRoute
+  '/words': typeof WordsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/words': typeof WordsRoute
+  '/words': typeof WordsRouteWithChildren
+  '/words/summary': typeof WordsSummaryRoute
+  '/words/': typeof WordsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/words'
+  fullPaths: '/' | '/about' | '/words' | '/words/summary' | '/words/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/words'
-  id: '__root__' | '/' | '/about' | '/words'
+  to: '/' | '/about' | '/words/summary' | '/words'
+  id: '__root__' | '/' | '/about' | '/words' | '/words/summary' | '/words/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  WordsRoute: typeof WordsRoute
+  WordsRoute: typeof WordsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -82,13 +99,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/words/': {
+      id: '/words/'
+      path: '/'
+      fullPath: '/words/'
+      preLoaderRoute: typeof WordsIndexRouteImport
+      parentRoute: typeof WordsRoute
+    }
+    '/words/summary': {
+      id: '/words/summary'
+      path: '/summary'
+      fullPath: '/words/summary'
+      preLoaderRoute: typeof WordsSummaryRouteImport
+      parentRoute: typeof WordsRoute
+    }
   }
 }
+
+interface WordsRouteChildren {
+  WordsSummaryRoute: typeof WordsSummaryRoute
+  WordsIndexRoute: typeof WordsIndexRoute
+}
+
+const WordsRouteChildren: WordsRouteChildren = {
+  WordsSummaryRoute: WordsSummaryRoute,
+  WordsIndexRoute: WordsIndexRoute,
+}
+
+const WordsRouteWithChildren = WordsRoute._addFileChildren(WordsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  WordsRoute: WordsRoute,
+  WordsRoute: WordsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
