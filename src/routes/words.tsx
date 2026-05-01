@@ -22,10 +22,10 @@ function Words() {
     speechSynthesis.speak(utterance);
   }, [currentIndex, isDone]);
 
-  const getCardColor = (status?: WordStatus) => {
-    if (status === 'known') return '#e6f9e6';
-    if (status === 'unknown') return '#fde8e8';
-    return '#fff';
+  const getWordColor = (status?: WordStatus) => {
+    if (status === 'known') return '#34a853';
+    if (status === 'unknown') return '#ea4335';
+    return '#1a1a1a';
   };
 
   useEffect(() => {
@@ -36,6 +36,9 @@ function Words() {
           if (!isDone) {
             setStatusMap((prev) => ({ ...prev, [currentWord.id]: 'unknown' }));
             setShowChinese(true);
+            speechSynthesis.speak(
+              Object.assign(new SpeechSynthesisUtterance(currentWord.english), { lang: 'en-US' }),
+            );
           }
           break;
         case 'ArrowRight':
@@ -89,20 +92,17 @@ function Words() {
       const absDy = Math.abs(dy);
       const threshold = 50;
 
-      if (absDx < threshold && absDy < threshold) {
-        setShowChinese((prev) => !prev);
-        const utterance = new SpeechSynthesisUtterance(currentWord.english);
-        utterance.lang = 'en-US';
-        speechSynthesis.speak(utterance);
-        return;
-      }
+      if (absDx < threshold && absDy < threshold) return;
 
       if (absDx > absDy) {
         if (dx < 0) {
-          // swipe left → unknown, show Chinese
+          // swipe left → unknown, show Chinese, play pronunciation
           if (!isDone) {
             setStatusMap((prev) => ({ ...prev, [currentWord.id]: 'unknown' }));
             setShowChinese(true);
+            const utterance = new SpeechSynthesisUtterance(currentWord.english);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
           }
         } else {
           // swipe right → known, next
@@ -187,8 +187,18 @@ function Words() {
       <div style={styles.progress}>
         {currentIndex + 1} / {words.length}
       </div>
-      <div style={{ ...styles.card, backgroundColor: getCardColor(statusMap[currentWord.id]) }}>
-        <div style={styles.english}>{currentWord.english}</div>
+      <div style={styles.card}>
+        <div
+          style={{ ...styles.english, color: getWordColor(statusMap[currentWord.id]) }}
+          onClick={() => {
+            setShowChinese((prev) => !prev);
+            const utterance = new SpeechSynthesisUtterance(currentWord.english);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
+          }}
+        >
+          {currentWord.english}
+        </div>
         <div
           style={{
             ...styles.chinese,
