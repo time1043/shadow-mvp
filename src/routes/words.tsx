@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+
 import { words } from '@/data/words';
 
 export const Route = createFileRoute('/words')({ component: Words });
@@ -13,6 +14,13 @@ function Words() {
 
   const currentWord = words[currentIndex];
   const isDone = currentIndex >= words.length;
+
+  useEffect(() => {
+    if (isDone) return;
+    const utterance = new SpeechSynthesisUtterance(currentWord.english);
+    utterance.lang = 'en-US';
+    speechSynthesis.speak(utterance);
+  }, [currentIndex, isDone]);
 
   const getCardColor = (status?: WordStatus) => {
     if (status === 'known') return '#e6f9e6';
@@ -60,6 +68,67 @@ function Words() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
+  });
+
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      const threshold = 50;
+
+      if (absDx < threshold && absDy < threshold) {
+        setShowChinese((prev) => !prev);
+        return;
+      }
+
+      if (absDx > absDy) {
+        if (dx < 0) {
+          // swipe left → unknown, show Chinese
+          if (!isDone) {
+            setStatusMap((prev) => ({ ...prev, [currentWord.id]: 'unknown' }));
+            setShowChinese(true);
+          }
+        } else {
+          // swipe right → known, next
+          if (!isDone) {
+            setStatusMap((prev) => ({ ...prev, [currentWord.id]: 'known' }));
+            setCurrentIndex((prev) => prev + 1);
+            setShowChinese(false);
+          }
+        }
+      } else {
+        if (dy < 0) {
+          // swipe up → next word (like short video feed)
+          if (currentIndex < words.length - 1) {
+            setCurrentIndex((prev) => prev + 1);
+            setShowChinese(false);
+          }
+        } else {
+          // swipe down → previous word
+          if (currentIndex > 0) {
+            setCurrentIndex((prev) => prev - 1);
+            setShowChinese(false);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', onTouchStart);
+    window.addEventListener('touchend', onTouchEnd);
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
   });
 
   if (isDone) {
@@ -126,7 +195,7 @@ function Words() {
       </div>
       <div style={styles.hints}>
         <span>← 不认识</span>
-        <span>↑↓ 切换单词 · 空格 显示/隐藏中文</span>
+        <span>↑↓ 切换单词 · 空格/轻点 显示中文</span>
         <span>认识 →</span>
       </div>
     </div>
@@ -142,6 +211,8 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 'calc(100vh - 60px)',
     padding: 24,
     fontFamily: 'system-ui, -apple-system, sans-serif',
+    touchAction: 'none',
+    userSelect: 'none',
   },
   progress: {
     fontSize: 14,
