@@ -63,6 +63,9 @@ function Words() {
         case ' ':
           e.preventDefault();
           setShowChinese((prev) => !prev);
+          speechSynthesis.speak(
+            Object.assign(new SpeechSynthesisUtterance(currentWord.english), { lang: 'en-US' }),
+          );
           break;
       }
     };
@@ -88,6 +91,9 @@ function Words() {
 
       if (absDx < threshold && absDy < threshold) {
         setShowChinese((prev) => !prev);
+        const utterance = new SpeechSynthesisUtterance(currentWord.english);
+        utterance.lang = 'en-US';
+        speechSynthesis.speak(utterance);
         return;
       }
 
